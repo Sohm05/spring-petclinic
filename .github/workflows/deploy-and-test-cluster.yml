@@ -1,31 +1,32 @@
-name: Deploy and Test Cluster
+name: Build and Deploy Spring Boot App to Azure
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'k8s/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'k8s/**'
+    branches:
+      - main
+      - feature1
 
 jobs:
-  deploy-and-test-cluster:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-      - name: Deploy application
-        run: |
-          kubectl apply -f k8s/
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
 
-      - name: Wait for Pods to be ready
-        run: |
-          kubectl wait --for=condition=ready pod -l app=demo-db --timeout=180s
-          kubectl wait --for=condition=ready pod -l app=petclinic --timeout=180s
 
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+         app-name: Spring-petclinic1
+         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+         package: target/*.jar
