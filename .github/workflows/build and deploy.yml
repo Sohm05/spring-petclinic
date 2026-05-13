@@ -22,7 +22,6 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
